@@ -4,7 +4,9 @@ from pathlib import Path
 from pydub import AudioSegment
 from datetime import datetime
 import shutil
-
+import subprocess
+from moviepy.editor import AudioFileClip, TextClip, CompositeVideoClip, ColorClip
+import math
 def merge_audio_files(chapter_audio_dir, output_file, format='wav'):
     """Merge multiple audio files into a single file while tracking chapter timestamps."""
     print(f"\n--- Merging Audio Files ---")
@@ -148,6 +150,58 @@ def organize_final_files(book_name, audio_file, metadata_file, timestamp_file, f
             print(f"Copied: {os.path.basename(src_file)}")
     
     return book_dir
+    
+FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+
+def ffmpeg_run(cmd):
+    subprocess.run(cmd, shell=True, check=True)
+
+def create_full_video(audio_file, book_name, output_dir):
+    """Create full video with audio and centered text."""
+    audio = AudioFileClip(audio_file)
+    duration = audio.duration
+    
+    # Create output path with extension
+    output_path = os.path.join(output_dir, f"{book_name}_full.mp4")
+    
+    command = [
+        "ffmpeg", "-y",
+        "-f", "lavfi",
+        "-i", f"color=size=1920x1080:duration={duration}:color=black",
+        "-i", audio_file,
+        "-vf", f"drawtext=fontfile='{FONT}':text='{book_name}':fontsize=70:fontcolor=white:x=(w-text_w)/2:y=(h-text_h)/2",
+        "-c:v", "libx264",
+        "-c:a", "aac",
+        output_path
+    ]
+    subprocess.run(command, check=True)
+    return output_path
+
+def create_shorts(audio_file, book_name, output_dir):
+    """Create vertical shorts from audio."""
+    audio = AudioFileClip(audio_file)
+    duration = audio.duration
+    os.makedirs(output_dir, exist_ok=True)
+    n = math.ceil(duration/60)
+    shorts_paths = []
+    
+    for i in range(n):
+        start = i*60
+        out = os.path.join(output_dir, f"{book_name}_short_{i+1}.mp4")
+        vf = (
+            f"drawtext=fontfile='{FONT}':text='PART {i+1}':fontsize=60:fontcolor=white:x=(w-text_w)/2:y=200,"
+            f"drawtext=fontfile='{FONT}':text='{book_name}':fontsize=70:fontcolor=white:x=(w-text_w)/2:y=400,"
+            f"drawtext=fontfile='{FONT}':text='Visit channel to listen to\\ncomplete audio book':fontsize=50:fontcolor=white:x=(w-text_w)/2:y=600:enable='gte(t,50)'"
+        )
+        cmd = (
+            f"ffmpeg -y -f lavfi -i \"color=size=1080x1920:duration=60:color=black\" "
+            f"-ss {start} -i \"{audio_file}\" -t 60 -vf \"{vf}\" "
+            f"-c:v libx264 -preset fast -c:a aac \"{out}\""
+        )
+        ffmpeg_run(cmd)
+        shorts_paths.append(out)
+    
+    return shorts_paths
 
 def process_output(chapter_audio_dir, book_name, output_base_dir='io/output_pool', format='wav'):
     """
@@ -181,8 +235,20 @@ def process_output(chapter_audio_dir, book_name, output_base_dir='io/output_pool
             os.path.join(output_base_dir, 'book')
         )
         
+        # 4. Generate full video
+        video_dir = os.path.join(output_base_dir, 'videos')
+        os.makedirs(video_dir, exist_ok=True)
+        video_path = create_full_video(merged_audio_file, book_name, video_dir)
+        
+        # 5. Generate shorts
+        shorts_dir = os.path.join(output_base_dir, 'shorts')
+        os.makedirs(shorts_dir, exist_ok=True)
+        shorts_paths = create_shorts(merged_audio_file, book_name, shorts_dir)
+        
         print(f"\n=== Output Processing Complete ===")
         print(f"Final book directory: {final_book_dir}")
+        print(f"Full video: {video_path}")
+        print(f"Shorts generated: {len(shorts_paths)}")
         return final_book_dir
         
     except Exception as e:
