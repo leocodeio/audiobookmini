@@ -235,20 +235,20 @@ def process_output(chapter_audio_dir, book_name, output_base_dir='io/output_pool
             os.path.join(output_base_dir, 'book')
         )
         
-        # 4. Generate full video
-        video_dir = os.path.join(output_base_dir, 'videos')
-        os.makedirs(video_dir, exist_ok=True)
-        video_path = create_full_video(merged_audio_file, book_name, video_dir)
+        # # 4. Generate full video
+        # video_dir = os.path.join(output_base_dir, 'videos')
+        # os.makedirs(video_dir, exist_ok=True)
+        # video_path = create_full_video(merged_audio_file, book_name, video_dir)
         
-        # 5. Generate shorts
-        shorts_dir = os.path.join(output_base_dir, 'shorts')
-        os.makedirs(shorts_dir, exist_ok=True)
-        shorts_paths = create_shorts(merged_audio_file, book_name, shorts_dir)
+        # # 5. Generate shorts
+        # shorts_dir = os.path.join(output_base_dir, 'shorts')
+        # os.makedirs(shorts_dir, exist_ok=True)
+        # shorts_paths = create_shorts(merged_audio_file, book_name, shorts_dir)
         
         print(f"\n=== Output Processing Complete ===")
         print(f"Final book directory: {final_book_dir}")
-        print(f"Full video: {video_path}")
-        print(f"Shorts generated: {len(shorts_paths)}")
+        # print(f"Full video: {video_path}")
+        # print(f"Shorts generated: {len(shorts_paths)}")
         return final_book_dir
         
     except Exception as e:

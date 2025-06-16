@@ -31,37 +31,37 @@ def process_book(pdf_path):
         # Step 1 & 2: Copy PDF to input pool
         filename = os.path.basename(pdf_path)
         input_book_path = os.path.join('io/input_pool/book', filename)
-        # copy2(pdf_path, input_book_path)
-        # print(f"Copied {filename} to input pool")
+        copy2(pdf_path, input_book_path)
+        print(f"Copied {filename} to input pool")
 
-        # # Step 3: Extract text from PDF
-        # book_text_dir = 'io/input_pool/book_text'
-        # extract_result = extract_book(
-        #     input_book_path,
-        #     use_toc=True,
-        #     extract_mode="chapters",
-        #     output_dir=book_text_dir,
-        #     progress_callback=lambda p: print(f"Extraction progress: {p}%") if p else None
-        # )
-        # print("Text extraction completed")
+        # Step 3: Extract text from PDF
+        book_text_dir = 'io/input_pool/book_text'
+        extract_result = extract_book(
+            input_book_path,
+            use_toc=True,
+            extract_mode="chapters",
+            output_dir=book_text_dir,
+            progress_callback=lambda p: print(f"Extraction progress: {p}%") if p else None
+        )
+        print("Text extraction completed")
 
         # Step 4-5: Generate audio for chapters
         chapter_audio_dir = 'io/input_pool/chapter_audio'
         book_name = os.path.splitext(filename)[0]
         
-        # # Configure Kokoro TTS
-        # voice = "af_heart"  # Default voice
-        # lang_code = "a"    # English
+        # Configure Kokoro TTS
+        voice = "af_heart"  # Default voice
+        lang_code = "a"    # English
         
-        # # Generate audio
-        # generate_audiobooks_kokoro(
-        #     input_dir=book_text_dir,
-        #     output_dir=chapter_audio_dir,
-        #     voice=voice,
-        #     lang_code=lang_code,
-        #     progress_callback=lambda p, f, i, t: print(f"Audio generation: {p}%") if p else None
-        # )
-        # print("Audio generation completed")
+        # Generate audio
+        generate_audiobooks_kokoro(
+            input_dir=book_text_dir,
+            output_dir=chapter_audio_dir,
+            voice=voice,
+            lang_code=lang_code,
+            progress_callback=lambda p, f, i, t: print(f"Audio generation: {p}%") if p else None
+        )
+        print("Audio generation completed")
         
         # Step 6: Process output
         process_output(
