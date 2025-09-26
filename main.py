@@ -21,7 +21,7 @@ def ensure_directories():
     for dir_path in directories:
         os.makedirs(dir_path, exist_ok=True)
 
-def process_book(pdf_path):
+def process_book(pdf_path, thumbnail_path):
     """Process a PDF file into an audiobook."""
     if not os.path.exists(pdf_path):
         print(f"Error: File not found - {pdf_path}")
@@ -65,6 +65,7 @@ def process_book(pdf_path):
         
         # Step 6: Process output
         process_output(
+            thumbnail_path,
             chapter_audio_dir,
             book_name,
             output_base_dir='io/output_pool',
@@ -80,18 +81,21 @@ def process_book(pdf_path):
 
 def main():
     """Main entry point."""
-    if len(sys.argv) != 2:
-        print("Usage: python main.py <path_to_pdf>")
+    if len(sys.argv) != 3:
+        print("Usage: python main.py <path_to_pdf> <path_to_thumbnail>")
         sys.exit(1)
 
     pdf_path = sys.argv[1]
     print(f"Processing PDF: {pdf_path}")
 
+    thumbnail_path = sys.argv[2]
+    print(f"Processing Thumbnail: {thumbnail_path}")
+
     # Ensure all required directories exist
     ensure_directories()
 
     # Process the book
-    if process_book(pdf_path):
+    if process_book(pdf_path, thumbnail_path):
         print("Processing completed successfully")
     else:
         print("Processing failed")

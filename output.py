@@ -203,7 +203,30 @@ def create_shorts(audio_file, book_name, output_dir):
     
     return shorts_paths
 
-def process_output(chapter_audio_dir, book_name, output_base_dir='io/output_pool', format='wav'):
+def create_full_video_with_thumbnails(audio_file, thumbnail_file, book_name, output_dir):
+    """Create full video with audio, thumbnail image, and centered text."""
+    audio = AudioFileClip(audio_file)
+    duration = audio.duration
+    
+    # Create output path with extension
+    output_path = os.path.join(output_dir, f"{book_name}_full_thumbnail.mp4")
+    
+    command = [
+        "ffmpeg", "-y",
+        "-loop", "1",
+        "-i", thumbnail_file,
+        "-i", audio_file,
+        "-c:v", "libx264",
+        "-c:a", "aac",
+        "-t", str(duration),
+        "-pix_fmt", "yuv420p",
+        "-vf", f"scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black,drawtext=fontfile='{FONT}':text='{book_name}':fontsize=70:fontcolor=white:x=(w-text_w)/2:y=h-150",
+        output_path
+    ]
+    subprocess.run(command, check=True)
+    return output_path
+
+def process_output(thumbnail_path, chapter_audio_dir, book_name, output_base_dir='io/output_pool', format='wav'):
     """
     Process the chapter audio files into the final audiobook structure.
     
@@ -236,14 +259,17 @@ def process_output(chapter_audio_dir, book_name, output_base_dir='io/output_pool
         )
         
         # 4. Generate full video
-        video_dir = os.path.join(output_base_dir, 'videos')
-        os.makedirs(video_dir, exist_ok=True)
-        video_path = create_full_video(merged_audio_file, book_name, video_dir)
+        # video_dir = os.path.join(output_base_dir, 'videos')
+        # os.makedirs(video_dir, exist_ok=True)
+        # video_path = create_full_video(merged_audio_file, book_name, video_dir)
         
         # 5. Generate shorts
         # shorts_dir = os.path.join(output_base_dir, 'shorts')
         # os.makedirs(shorts_dir, exist_ok=True)
         # shorts_paths = create_shorts(merged_audio_file, book_name, shorts_dir)
+
+        # 6. Generate full video with thumbnail
+        video_path = create_full_video_with_thumbnails(merged_audio_file, thumbnail_path, book_name, output_base_dir)
         
         print(f"\n=== Output Processing Complete ===")
         print(f"Final book directory: {final_book_dir}")
